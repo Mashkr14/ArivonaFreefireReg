@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arivona Freefire Tournament Registration</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #ff8c00; /* A fiery orange suitable for Freefire */
+            --background-color: #1e1e2f; /* Dark theme */
+            --card-background: #2a2a3a;
+            --text-color: #f0f0f0;
+            --input-border-color: #444;
+            --success-color: #00ff7f;
+            --error-color: #ff4757;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card-background);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .logo {
+            width: 120px; /* Adjust size as needed */
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid var(--primary-color);
+            object-fit: cover;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.8rem;
+        }
+
+        #playerForm {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        label {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        input {
+            padding: 0.8rem;
+            border: 1px solid var(--input-border-color);
+            background-color: var(--background-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            color: var(--text-color);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px var(--primary-color);
+        }
+
+        button {
+            background: linear-gradient(90deg, #ff8c00, #ff4500);
+            color: white;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 2rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #message {
+            margin-top: 1.5rem;
+            font-weight: bold;
+            height: 20px; /* Reserve space to prevent layout shift */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div class="logo-container">
+            <img class="image.jpg" src="https://i.ibb.co/mHkR0bB/gaming-logo-template-free-vector.jpg" alt="Arivona Tournament Logo">
+            <h1>Arivona Freefire Tournament</h1>
+        </div>
+        
+        <form id="playerForm">
+            <label for="originalName">Original Name:</label>
+            <input type="text" id="originalName" name="originalName" placeholder="e.g., John Doe" required>
+
+            <label for="whatsappNo">WhatsApp Number:</label>
+            <input type="tel" id="whatsappNo" name="whatsappNo" placeholder="e.g., +919876543210" required>
+
+            <label for="gameUsername">Game Username:</label>
+            <input type="text" id="gameUsername" name="gameUsername" placeholder="e.g., ProGamer123" required>
+
+            <label for="kills">Number of Kills:</label>
+            <input type="number" id="kills" name="kills" placeholder="e.g., 15" required min="0">
+
+            <label for="playerUID">Player UID (Optional):</label>
+            <input type="text" id="playerUID" name="playerUID" placeholder="e.g., 1234567890">
+
+            <button type="submit" id="submitButton">Register Player</button>
+        </form>
+        
+        <p id="message"></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // 1. --- UPDATE THESE ---
+        // Replace with your actual Supabase Project URL and Public Anon Key
+        const supabaseUrl = 'YOUR_SUPABASE_URL';
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+        
+        // 2. --- INITIALIZE SUPABASE CLIENT ---
+        // No need to change anything here
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // 3. --- FORM SUBMISSION LOGIC ---
+        // No need to change anything here
+        const playerForm = document.getElementById('playerForm');
+        const messageEl = document.getElementById('message');
+        const submitButton = document.getElementById('submitButton');
+        
+        playerForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevents the form from reloading the page
+            
+            // Disable button to prevent multiple submissions
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+            messageEl.textContent = '';
+            
+            // Create an object with the form data
+            const formData = new FormData(playerForm);
+            const playerData = {
+                original_name: formData.get('originalName'),
+                whatsapp_no: formData.get('whatsappNo'),
+                game_username: formData.get('gameUsername'),
+                kills: parseInt(formData.get('kills'), 10),
+                player_uid: formData.get('playerUID') || null, // Set to null if empty
+            };
+            
+            // Insert the data into your Supabase 'players' table
+            const { data, error } = await supabase
+                .from('players') // Make sure your table is named 'players'
+                .insert([playerData]);
+            
+            if (error) {
+                // If there's an error, show it to the user
+                console.error('Error inserting data:', error.message);
+                messageEl.textContent = 'Error: Could not submit data. Please try again.';
+                messageEl.style.color = 'var(--error-color)';
+                
+                // Re-enable the button
+                submitButton.disabled = false;
+                submitButton.textContent = 'Register Player';
+            } else {
+                // If successful, show a success message and reset the form
+                console.log('Data inserted successfully:', data);
+                messageEl.textContent = 'Registration Successful!';
+                messageEl.style.color = 'var(--success-color)';
+                playerForm.reset();
+                
+                // Keep success message and button disabled for a few seconds
+                setTimeout(() => {
+                    messageEl.textContent = '';
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Register Player';
+                }, 4000); // 4 seconds
+            }
+        });
+    </script>
+
+</body>
+</html>
